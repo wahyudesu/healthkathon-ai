@@ -6,7 +6,6 @@ from dotenv import load_dotenv
 import os
 import pandas as pd
 import altair as alt
-import plost
 
 load_dotenv()
 
