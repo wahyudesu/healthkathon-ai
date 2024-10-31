@@ -5,6 +5,8 @@ import numpy as np
 from dotenv import load_dotenv
 import os
 import pandas as pd
+import altair as alt
+
 
 load_dotenv()
 
@@ -78,6 +80,7 @@ def get_db_connection():
         st.error(f"Error connecting to the database: {e}")
         return None
 
+np.random.seed(42)  # Set seed for reproducibility
 data = {
     'baby_id': range(1, 101),  # 100 babies
     'category': np.random.choice(['stunting', 'at risk of stunting', 'healthy'], size=100),
@@ -85,6 +88,14 @@ data = {
     'weight_kg': np.random.uniform(2.5, 10.0, size=100),  # Weight in kg
     'height_cm': np.random.uniform(45, 90, size=100)  # Height in cm
 }
+
+# Calculate the percentage of healthy babies and stunting babies
+total_babies = len(data['baby_id'])
+healthy_count = np.sum(data['category'] == 'healthy')
+stunting_count = np.sum(data['category'] == 'stunting')
+
+percentage_healthy = (healthy_count / total_babies * 100) if total_babies > 0 else 0
+percentage_stunting = (stunting_count / total_babies * 100) if total_babies > 0 else 0
 
 # Main function app
 def main():
@@ -113,12 +124,14 @@ def main():
     # Display sidebar menu and pages if logged in
     if st.session_state.logged_in:
         st.sidebar.title("Navigation")
-        menu_selection = st.sidebar.radio("Menu", ["Dashboard", "Data", "Account"])
+        menu_selection = st.sidebar.radio("Menu", ["Dashboard", "Data","Posyandu", "Account"])
         
         if menu_selection == "Dashboard":
             dashboard_page()
         elif menu_selection == "Data":
             data_page()
+        elif menu_selection == "Posyandu":
+            posyandu()
         elif menu_selection == "Account":
             account_page()
 
@@ -139,7 +152,7 @@ def authenticate_user(email, password):
             conn.close()
     return None
 
-# Dashboard (Home page)
+# Dashboard (Home page) 1
 def dashboard_page():
     st.title("Simple Login Dashboard")
 
@@ -150,10 +163,64 @@ def dashboard_page():
     col = st.columns((2, 2, 2, 2), gap='medium')
 
     # Create a two-column layout
-    col1, col2 = st.columns(2)
+    col1, col2= st.columns(2)
 
     with col1:
-        st.write("apalah")
+        kiri, kanan = st.columns(2)
+        
+        def make_donut(healthy_percentage, label_text, color_scheme):
+            if color_scheme == 'blue':
+                chart_color = ['#29b5e8', '#155F7A']
+            elif color_scheme == 'green':
+                chart_color = ['#27AE60', '#12783D']
+            elif color_scheme == 'orange':
+                chart_color = ['#F39C12', '#875A12']
+            elif color_scheme == 'red':
+                chart_color = ['#E74C3C', '#781F16']
+            
+            # Data for the donut chart
+            source = pd.DataFrame({
+                "Category": ['Unhealthy', label_text],
+                "Percentage": [100 - healthy_percentage, healthy_percentage]
+            })
+            source_bg = pd.DataFrame({
+                "Category": ['Unhealthy', label_text],
+                "Percentage": [100, 0]
+            })
+            
+            # Create the donut chart
+            plot = alt.Chart(source).mark_arc(innerRadius=45, cornerRadius=25).encode(
+                theta="Percentage",
+                color=alt.Color("Category:N",
+                                scale=alt.Scale(
+                                    domain=[label_text, 'Unhealthy'],
+                                    range=chart_color),
+                                legend=None),
+            ).properties(width=130, height=130)
+            
+            # Add text to the chart
+            text = plot.mark_text(align='center', color=chart_color[0], font="Lato", fontSize=32, fontWeight=700, fontStyle="italic").encode(
+                text=alt.value(f'{healthy_percentage} %')
+            )
+            
+            # Background plot
+            plot_bg = alt.Chart(source_bg).mark_arc(innerRadius=45, cornerRadius=20).encode(
+                theta="Percentage",
+                color=alt.Color("Category:N",
+                                scale=alt.Scale(
+                                    domain=[label_text, 'Unhealthy'],
+                                    range=chart_color),
+                                legend=None),
+            ).properties(width=130, height=130)
+            
+            return plot_bg + plot + text
+
+        with kiri:
+            st.header('Bayi sehat')
+            st.altair_chart(make_donut(healthy_percentage=percentage_healthy, label_text='Healthy Babies', color_scheme='green'))
+        with kanan:
+            st.header('Bayi stunting')
+            st.altair_chart(make_donut(healthy_percentage=percentage_stunting, label_text='Healthy Babies', color_scheme='red'))
 
     with col2:
         # Create a 2x2 grid layout
@@ -186,12 +253,56 @@ def dashboard_page():
     plt.ylabel('Y-axis')
     plt.legend()
     st.pyplot(plt)
-# Profile page
-def data_page():
-    df_babies = pd.DataFrame(data)
-    st.write(df_babies)
 
-# Settings page
+# Data page 2
+def data_page():
+    
+    np.random.seed(42)  
+
+    data = pd.DataFrame({
+        'baby_id': range(1, 101),  # 100 babies
+        'category': np.random.choice(['stunting', 'at risk of stunting', 'healthy'], size=100),
+        'age_months': np.random.randint(0, 24, size=100),  # Age in months
+        'weight_kg': np.random.uniform(2.5, 10.0, size=100),  # Weight in kg
+        'height_cm': np.random.uniform(45, 90, size=100)  # Height in cm
+    })
+
+    columns_list = list(data.columns)
+
+    #table
+    col = st.columns((1.5, 2, 2, 2, 2, 2), gap='medium')  
+    header = columns_list #header
+
+    for col, field in zip(col, header): 
+        col.write("**" + field + "**")
+
+    for idx, row in data.iterrows():
+        col = st.columns((1.5, 2, 2, 2, 2, 2), gap='medium')  
+        col[0].write(str(idx))
+        col[1].write(row['category'])
+        col[2].write(row['age_months'])
+        col[3].write(row['weight_kg'])
+        col[4].write(row['height_cm'])
+        
+        placeholder = col[5].empty()
+        show_more = placeholder.button("more", key=idx, type="primary")
+
+        # if button pressed
+        if show_more:
+            # rename button
+            placeholder.button("less", key=str(idx) + "_")
+            
+            # do stuff
+            st.write("This is some more stuff with a checkbox")
+            temp = st.selectbox("Select one", ["A", "B", "C"], key=f"selectbox_{idx}")
+            st.write("You picked ", temp)
+            st.write("---")
+            
+# Settings page 3
+def posyandu():
+    st.title("Data posyandu")
+
+# Settings page 4
 def account_page():
     st.title("Account Information")
 
