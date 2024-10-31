@@ -7,7 +7,6 @@ import os
 import pandas as pd
 import altair as alt
 
-
 load_dotenv()
 
 st.set_page_config(

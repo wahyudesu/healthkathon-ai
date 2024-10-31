@@ -1,0 +1,7 @@
+psycopg2
+streamlit
+matplotlib
+numpy
+python-dotenv
+pandas
+altair
