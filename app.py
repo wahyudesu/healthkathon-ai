@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 import os
 import pandas as pd
 import altair as alt
+import plost
 
 load_dotenv()
 
@@ -35,9 +36,10 @@ st.markdown("""
 }
 
 [data-testid="stMetric"] {
-    background-color: #393939;
+    background-color: #7da0fa;
     text-align: center;
     padding: 15px 0;
+    border-radius: 5px;
 }
 
 [data-testid="stMetricLabel"] {
@@ -123,7 +125,7 @@ def main():
     # Display sidebar menu and pages if logged in
     if st.session_state.logged_in:
         st.sidebar.title("Navigation")
-        menu_selection = st.sidebar.radio("Menu", ["Dashboard", "Data","Posyandu", "Account"])
+        menu_selection = st.sidebar.radio("Menu", ["Dashboard", "Data","Posyandu", "Article", "Account"])
         
         if menu_selection == "Dashboard":
             dashboard_page()
@@ -131,8 +133,11 @@ def main():
             data_page()
         elif menu_selection == "Posyandu":
             posyandu()
+        elif menu_selection == "Article":
+            article()
         elif menu_selection == "Account":
             account_page()
+        
 
 # Login function to authenticate user and fetch details
 def authenticate_user(email, password):
@@ -155,17 +160,13 @@ def authenticate_user(email, password):
 def dashboard_page():
     st.title("Simple Login Dashboard")
 
-    # Sidebar for additional options
     st.sidebar.title("Options")
     st.sidebar.write("Select an option from the sidebar.")
 
-    col = st.columns((2, 2, 2, 2), gap='medium')
+    col = st.columns((4,5), gap='medium')
 
-    # Create a two-column layout
-    col1, col2= st.columns(2)
-
-    with col1:
-        kiri, kanan = st.columns(2)
+    with col[0]:
+        colcol = st.columns((1.6,2), gap='medium')
         
         def make_donut(healthy_percentage, label_text, color_scheme):
             if color_scheme == 'blue':
@@ -214,33 +215,23 @@ def dashboard_page():
             
             return plot_bg + plot + text
 
-        with kiri:
-            st.header('Bayi sehat')
+        with colcol[0]:
+            st.subheader('Bayi sehat')
             st.altair_chart(make_donut(healthy_percentage=percentage_healthy, label_text='Healthy Babies', color_scheme='green'))
-        with kanan:
-            st.header('Bayi stunting')
+        with colcol[1]:
+            st.subheader('Bayi stunting')
             st.altair_chart(make_donut(healthy_percentage=percentage_stunting, label_text='Healthy Babies', color_scheme='red'))
 
-    with col2:
+    with col[1]:
         # Create a 2x2 grid layout
-        grid1, grid2 = st.columns(2)
-        with grid1:
-            st.header("Grid Item 1")
-            st.write("Content for grid item 1.")
+        grid1, grid2 = st.columns((2), gap='medium')
+        grid1.metric("**Total Balita**", 2)
+        grid2.metric("**Balita Potensi Stunting**", 3)
         
-        with grid2:
-            st.header("Grid Item 2")
-            st.write("Content for grid item 2.")
-
-        grid3, grid4 = st.columns(2)
-        with grid3:
-            st.header("Grid Item 3")
-            st.write("Content for grid item 3.")
+        grid3, grid4 = st.columns((2), gap='medium')
+        grid3.metric("**Balita Sehat**", 20)
+        grid4.metric("**Balita Stunting**", 31)
         
-        with grid4:
-            st.header("Grid Item 4")
-            st.write("Content for grid item 4.")
-            # Sample data for the dashboard
     x = np.linspace(0, 10, 100)
     y = np.sin(x)
 
@@ -255,52 +246,102 @@ def dashboard_page():
 
 # Data page 2
 def data_page():
-    
-    np.random.seed(42)  
+    st.header("Data Pasien")
+    tab1, tab2 = st.tabs(["Semua Data", "Riwayat"])
 
-    data = pd.DataFrame({
-        'baby_id': range(1, 101),  # 100 babies
-        'category': np.random.choice(['stunting', 'at risk of stunting', 'healthy'], size=100),
-        'age_months': np.random.randint(0, 24, size=100),  # Age in months
-        'weight_kg': np.random.uniform(2.5, 10.0, size=100),  # Weight in kg
-        'height_cm': np.random.uniform(45, 90, size=100)  # Height in cm
-    })
+    with tab1:
+        st.header("Data Balita")
+        st.caption("This is a string that explains something above. This is a string that explains something above. This is a string that explains something above. This is a string that explains something above. This is a string that explains something above. This is a string that explains something above.")
+        np.random.seed(42)  
 
-    columns_list = list(data.columns)
+        data = pd.DataFrame({
+            'baby_id': range(1, 101),  # 100 babies
+            'category': np.random.choice(['stunting', 'at risk of stunting', 'healthy'], size=100),
+            'age_months': np.random.randint(0, 24, size=100),  # Age in months
+            'weight_kg': np.random.uniform(2.5, 10.0, size=100),  # Weight in kg
+            'height_cm': np.random.uniform(45, 90, size=100)  # Height in cm
+        })
 
-    #table
-    col = st.columns((1.5, 2, 2, 2, 2, 2), gap='medium')  
-    header = columns_list #header
+        columns_list = list(data.columns)
 
-    for col, field in zip(col, header): 
-        col.write("**" + field + "**")
-
-    for idx, row in data.iterrows():
+        #table
         col = st.columns((1.5, 2, 2, 2, 2, 2), gap='medium')  
-        col[0].write(str(idx))
-        col[1].write(row['category'])
-        col[2].write(row['age_months'])
-        col[3].write(row['weight_kg'])
-        col[4].write(row['height_cm'])
-        
-        placeholder = col[5].empty()
-        show_more = placeholder.button("more", key=idx, type="primary")
+        header = columns_list #header
 
-        # if button pressed
-        if show_more:
-            # rename button
-            placeholder.button("less", key=str(idx) + "_")
+        for col, field in zip(col, header): 
+            col.write("**" + field + "**")
+
+        for idx, row in data.iterrows():
+            col = st.columns((1.5, 2, 2, 2, 2, 2), gap='medium')  
+            col[0].write(str(idx))
+            col[1].write(row['category'])
+            col[2].write(row['age_months'])
+            col[3].write(row['weight_kg'])
+            col[4].write(row['height_cm'])
             
-            # do stuff
-            st.write("This is some more stuff with a checkbox")
-            temp = st.selectbox("Select one", ["A", "B", "C"], key=f"selectbox_{idx}")
-            st.write("You picked ", temp)
-            st.write("---")
-            
+            placeholder = col[5].empty()
+            show_more = placeholder.button("more", key=idx, type="primary")
+
+            # if button pressed
+            if show_more:
+                # rename button
+                placeholder.button("less", key=str(idx) + "_")
+                
+                # do stuff
+                st.write("This is some more stuff with a checkbox")
+                temp = st.selectbox("Select one", ["A", "B", "C"], key=f"selectbox_{idx}")
+                st.write("You picked ", temp)
+                st.write("---")
+    with tab2:
+        st.header("Content for Tab 2")
+        st.write("This is the content of the second tab.")
+
 # Settings page 3
 def posyandu():
     st.title("Data posyandu")
+    tab1, tab2, tab3 = st.tabs(["Cat", "Dog", "Owl"])
 
+    with tab1:
+        st.header("A cat")
+        st.image("https://static.streamlit.io/examples/cat.jpg", width=200)
+    with tab2:
+        st.header("A dog")
+        st.image("https://static.streamlit.io/examples/dog.jpg", width=200)
+    with tab3:
+        st.header("An owl")
+        st.image("https://static.streamlit.io/examples/owl.jpg", width=200)
+
+# Article
+def article():
+    
+    st.title('Research article')
+
+    st.header('Writing an interactive research article using Streamlit')
+    if st.button("Read More", key="read_more_1"):
+        st.markdown('''
+        This is additional information that provides more context and details about the topic discussed in the article. 
+        It can include insights, data, or any other relevant information that enhances the reader's understanding.
+        ''')
+        if st.button("Back", key="back_1"):
+            st.empty()
+            
+    st.header('Writing an interactive research article using Streamlit2')
+    if st.button("Read More", key="read_more_2"):
+        st.markdown('''
+        This is additional information that provides more context and details about the topic d.
+        ''')
+        if st.button("Back", key="back_2"):
+            st.empty()
+    
+    st.header('Writing an interactive research article using Streamlit3')
+    if st.button("Read More", key="read_more_3"):
+        st.markdown('''
+        This is additional information and details about the topic discussed in the article. 
+        It can include insights, data, or any other relevant information that enhances the reader's understanding.
+        ''')
+        if st.button("Back", key="back_3"):
+            st.empty()
+            
 # Settings page 4
 def account_page():
     st.title("Account Information")
