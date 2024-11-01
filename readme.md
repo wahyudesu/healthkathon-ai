@@ -7,5 +7,12 @@
 - Password
 - Role
 
-## Article
-- https://kamulyan-bantarsari.desa.id/detail/edukasi-pencegahan-stunting-pada-ibu-balita
+## StunTRON ai
+
+1. Jalankan virtual environment
+myenv\Scripts\activate
+2. Install semua library
+pip install -r requirements.txt
+3. Jalankan kode
+streamlit run app.py
+Login menggunakan email dan password
