@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 import os
 import pandas as pd
 import altair as alt
+from groq import Groq
 
 load_dotenv()
 
@@ -81,14 +82,7 @@ def get_db_connection():
         return None
 
 data = pd.read_excel("data/data_balita.xlsx")
-
-# data = {
-#     'baby_id': range(1, 101),  # 100 babies
-#     'category': np.random.choice(['stunting', 'at risk of stunting', 'healthy'], size=100),
-#     'age_months': np.random.randint(0, 24, size=100),  # Age in months
-#     'weight_kg': np.random.uniform(2.5, 10.0, size=100),  # Weight in kg
-#     'height_cm': np.random.uniform(45, 90, size=100)  # Height in cm
-# }
+data1 = pd.read_excel("data/data_balita.xlsx")
 
 # Calculate the percentage of healthy babies and stunting babies
 total_babies = len(data['Nama Balita'])
@@ -157,11 +151,10 @@ def authenticate_user(email, password):
 
 # Dashboard (Home page) 1
 def dashboard_page():
-    st.title("Simple Login Dashboard")
+    st.title("Dashboard")
     st.info(
     """
-    Need a feature that's not on here?
-    [Let us know by opening a GitHub issue!](https://github.com/streamlit/streamlit/issues)
+    Aplikasi ini masih beta dan beberapa fitur masih terbatas
     """,
     icon="👾",
 )
@@ -231,67 +224,61 @@ def dashboard_page():
     with col[1]:
         # Create a 2x2 grid layout
         grid1, grid2 = st.columns((2), gap='medium')
-        grid1.metric("**Total Balita**", 2)
-        grid2.metric("**Balita Potensi Stunting**", 3)
+        grid1.metric("**Total Balita**", len(data))
+        grid2.metric("**Balita Potensi Stunting**", len(data[data['Status Stunting'] == 'Potensi Stunting']))
         
         grid3, grid4 = st.columns((2), gap='medium')
-        grid3.metric("**Balita Sehat**", 20)
-        grid4.metric("**Balita Stunting**", 31)
+        grid3.metric("**Balita Sehat**", len(data[data['Status Stunting'] == 'Sehat']))
+        grid4.metric("**Balita Stunting**", len(data[data['Status Stunting'] == 'Stunting']))
         
     #Lanjutan dashboard
 
 # Data page 2
 def data_page():
-    st.header("Data Pasien")
+    st.header("Data Balita")
     col1, col2, col3, col4 = st.columns(4)
+    with col3:
+        lang_selection = st.selectbox("Pilih bahasa", [ "Indonesia", "Inggris"]) 
+    with col4:
+        model_selection = st.selectbox("Pilih model", [ "gemini", "openai", "claude", "llama"])
 
     tab1, tab2 = st.tabs(["Semua Data", "Riwayat"])
 
     with tab1:
-        st.header("Data Balita")
-        st.caption("This is a string that explains something above. This is a string that explains something above. This is a string that explains something above. This is a string that explains something above. This is a string that explains something above. This is a string that explains something above.")
-        data1 = pd.read_excel("data/data_balita.xlsx")
+        st.caption("Pilih satu balita atau beberapa untuk memberikan rekomendasi gizi")
+        print(data1)
         riwayat = pd.DataFrame()
 
-        columns_list = list(data1.columns)
+        if "df" not in st.session_state:
+            st.session_state.df = data1
 
-        #table
-        col = st.columns((1.5, 2, 2, 2, 2, 2,2,2,2,2,2), gap='medium')  
-        header = columns_list
+        event = st.dataframe(
+            st.session_state.df,
+            key="data",
+            on_select="rerun",
+            selection_mode=["multi-row"],
+        )
+        nama_balita = data1.iloc[event['selection']['rows']]['Nama Balita'].str.cat(sep=', ')
+        umur_balita = data1.iloc[event['selection']['rows']]['Usia Balita (bulan)']
+        status_balita =data1.iloc[event['selection']['rows']]['Status Stunting']
+        if st.button(f"Rekomendasi gizi untuk {nama_balita}"):
+            # data1.iloc[event['selection']['rows']][['Status Stunting']]
+            client = Groq(
+                api_key=os.environ.get("GROQ"),
+            )
 
-        for col, field in zip(col, header): 
-            col.write("**" + field + "**")
-    
-        for idx, row in data1.iterrows():
-            col = st.columns((1.5, 2, 2, 2, 2, 2,2,2,2,2,2), gap='medium')  
-            col[0].write(row[0])
-            col[1].write(row[1])
-            col[2].write(row[2])
-            col[3].write(row[3])
-            col[4].write(row[4])
-            col[5].write(row[5])
-            col[6].write(row[6])
-            col[7].write(row[7])
-            col[8].write(row[8])
-            col[9].write(row[9])
-            
-            placeholder = col[10].empty()
-            with placeholder.popover("Action", help="Klik untuk action"):
-                st.markdown("Penanganan")
-                if st.button("Rekomendasi gizi", key=row[0]):
-                    print(idx)
-                    st.markdown("Hello World 👋")
-                    name = st.text_input("What's your name?", key=idx)
-                    st.write("Your name:", name)
-                    if st.button("Kirim", key=row[1]):
-                        print(row[1])
-                        # if row[1] in data1['Nama Balita'].values:
-                        #     riwayat = riwayat.append(data1[data1['Nama Balita'] == row[1]])
-                        #     print(riwayat)
-                if st.button("Analisis Medis", key=row[2]):
-                    st.markdown("Hello World 👋")
-                    name = st.text_input("What's your name?", key=idx)
-                    st.write("Your name:", name)
+            chat_completion = client.chat.completions.create(
+                messages=[
+                    {
+                        "role": "user",
+                        "content": f"Berikan rekomendasi gizi untuk tiap-tiap {nama_balita}, sesuai dengan {umur_balita}, dan status stuntingnya {status_balita} dengan bahasa {lang_selection} yang singkat dan padat"
+                    }
+                ],  
+                model="llama3-8b-8192"
+            )
+
+            chat_completion.choices[0].message.content
+
     with tab2:
         if riwayat.empty:
                 st.info(
@@ -326,16 +313,16 @@ def data_page():
             if st.button("Hapus", key=row[0]):
                 riwayat = riwayat.drop(idx)
 
-
 # Settings page 3
 def posyandu():
-    st.title("Data Posyandu")
-
-    tab1, tab2 = st.tabs(["Cat", "Dog"])
+    st.title("Data Fasilitas")
+    tab1, tab2 = st.tabs(["Posyandu", "Rumah sakit"])
 
     with tab1:
         data_posyandu = pd.read_excel("data/data_posyandu.xlsx")
         st.dataframe(data_posyandu)
+    with tab2:
+        st.markdown("Data rumah sakit masih belum tersedia")
 
 # Article
 def article():
