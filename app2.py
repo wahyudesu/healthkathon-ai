@@ -1,45 +1,44 @@
-import streamlit as st
-import numpy as np
+import os
+from psycopg2 import pool
+from dotenv import load_dotenv
 
-# Data dummmy
-np.random.seed(42)  
-import pandas as pd
+# Load .env file
+load_dotenv()
 
-data = pd.DataFrame({
-    'baby_id': range(1, 101),  # 100 babies
-    'category': np.random.choice(['stunting', 'at risk of stunting', 'healthy'], size=100),
-    'age_months': np.random.randint(0, 24, size=100),  # Age in months
-    'weight_kg': np.random.uniform(2.5, 10.0, size=100),  # Weight in kg
-    'height_cm': np.random.uniform(45, 90, size=100)  # Height in cm
-})
+# Get the connection string from the environment variable
+connection_string = os.getenv('DATABASE_URL')
 
-columns_list = list(data.columns)
+# Create a connection pool
+connection_pool = pool.SimpleConnectionPool(
+    1,  # Minimum number of connections in the pool
+    10,  # Maximum number of connections in the pool
+    connection_string
+)
 
-#table
-col = st.columns((1.5, 2, 2, 2, 2, 2), gap='medium')  
-header = columns_list #header
+# Check if the pool was created successfully
+if connection_pool:
+    print("Connection pool created successfully")
 
-for col, field in zip(col, header): 
-	col.write("**" + field + "**")
+# Get a connection from the pool
+conn = connection_pool.getconn()
 
-for idx, row in data.iterrows():
-    col = st.columns((1.5, 2, 2, 2, 2, 2), gap='medium')  
-    col[0].write(str(idx))
-    col[1].write(row['category'])
-    col[2].write(row['age_months'])
-    col[3].write(row['weight_kg'])
-    col[4].write(row['height_cm'])
-    
-    placeholder = col[5].empty()
-    show_more = placeholder.button("more", key=idx, type="primary")
+# Create a cursor object
+cur = conn.cursor()
 
-    # if button pressed
-    if show_more:
-        # rename button
-        placeholder.button("less", key=str(idx) + "_")
-        
-        # do stuff
-        st.write("This is some more stuff with a checkbox")
-        temp = st.selectbox("Select one", ["A", "B", "C"], key=f"selectbox_{idx}")
-        st.write("You picked ", temp)
-        st.write("---")
+# Execute SQL commands to retrieve the current time and version from PostgreSQL
+cur.execute('SELECT NOW();')
+time = cur.fetchone()[0]
+
+cur.execute('SELECT version();')
+version = cur.fetchone()[0]
+
+# Close the cursor and return the connection to the pool
+cur.close()
+connection_pool.putconn(conn)
+
+# Close all connections in the pool
+connection_pool.closeall()
+
+# Print the results
+print('Current time:', time)
+print('PostgreSQL version:', version)

@@ -14,7 +14,7 @@ st.set_page_config(
     page_icon="❤️🧑‍⚕️",
     layout="wide",
     initial_sidebar_state="expanded",
-    menu_items={"About": "Kutakbisa membuatmu jatuh cinta kepadaku meski kau tak cinta kepadaku beri sedikit waktu"}
+    menu_items={"About": "Project Ai Hackaton"}
 )
 
 # CSS styling
@@ -80,22 +80,23 @@ def get_db_connection():
         st.error(f"Error connecting to the database: {e}")
         return None
 
-np.random.seed(42)  # Set seed for reproducibility
-data = {
-    'baby_id': range(1, 101),  # 100 babies
-    'category': np.random.choice(['stunting', 'at risk of stunting', 'healthy'], size=100),
-    'age_months': np.random.randint(0, 24, size=100),  # Age in months
-    'weight_kg': np.random.uniform(2.5, 10.0, size=100),  # Weight in kg
-    'height_cm': np.random.uniform(45, 90, size=100)  # Height in cm
-}
+data = pd.read_excel("data/data_balita.xlsx")
+
+# data = {
+#     'baby_id': range(1, 101),  # 100 babies
+#     'category': np.random.choice(['stunting', 'at risk of stunting', 'healthy'], size=100),
+#     'age_months': np.random.randint(0, 24, size=100),  # Age in months
+#     'weight_kg': np.random.uniform(2.5, 10.0, size=100),  # Weight in kg
+#     'height_cm': np.random.uniform(45, 90, size=100)  # Height in cm
+# }
 
 # Calculate the percentage of healthy babies and stunting babies
-total_babies = len(data['baby_id'])
-healthy_count = np.sum(data['category'] == 'healthy')
-stunting_count = np.sum(data['category'] == 'stunting')
+total_babies = len(data['Nama Balita'])
+healthy_count = np.sum(data['Status Stunting'] == 'Sehat')
+stunting_count = np.sum(data['Status Stunting'] == 'Stunting')
 
-percentage_healthy = (healthy_count / total_babies * 100) if total_babies > 0 else 0
-percentage_stunting = (stunting_count / total_babies * 100) if total_babies > 0 else 0
+percentage_healthy = int(healthy_count / total_babies * 100) if total_babies > 0 else 0
+percentage_stunting = int(stunting_count / total_babies * 100) if total_babies > 0 else 0
 
 # Main function app
 def main():
@@ -137,7 +138,6 @@ def main():
         elif menu_selection == "Account":
             account_page()
         
-
 # Login function to authenticate user and fetch details
 def authenticate_user(email, password):
     conn = get_db_connection()
@@ -158,6 +158,13 @@ def authenticate_user(email, password):
 # Dashboard (Home page) 1
 def dashboard_page():
     st.title("Simple Login Dashboard")
+    st.info(
+    """
+    Need a feature that's not on here?
+    [Let us know by opening a GitHub issue!](https://github.com/streamlit/streamlit/issues)
+    """,
+    icon="👾",
+)
 
     st.sidebar.title("Options")
     st.sidebar.write("Select an option from the sidebar.")
@@ -231,116 +238,168 @@ def dashboard_page():
         grid3.metric("**Balita Sehat**", 20)
         grid4.metric("**Balita Stunting**", 31)
         
-    x = np.linspace(0, 10, 100)
-    y = np.sin(x)
-
-    # Create a plot
-    plt.figure(figsize=(10, 5))
-    plt.plot(x, y, label='Sine Wave')
-    plt.title('Sample Graph')
-    plt.xlabel('X-axis')
-    plt.ylabel('Y-axis')
-    plt.legend()
-    st.pyplot(plt)
+    #Lanjutan dashboard
 
 # Data page 2
 def data_page():
     st.header("Data Pasien")
+    col1, col2, col3, col4 = st.columns(4)
+
     tab1, tab2 = st.tabs(["Semua Data", "Riwayat"])
 
     with tab1:
         st.header("Data Balita")
         st.caption("This is a string that explains something above. This is a string that explains something above. This is a string that explains something above. This is a string that explains something above. This is a string that explains something above. This is a string that explains something above.")
-        np.random.seed(42)  
+        data1 = pd.read_excel("data/data_balita.xlsx")
+        riwayat = pd.DataFrame()
 
-        data = pd.DataFrame({
-            'baby_id': range(1, 101),  # 100 babies
-            'category': np.random.choice(['stunting', 'at risk of stunting', 'healthy'], size=100),
-            'age_months': np.random.randint(0, 24, size=100),  # Age in months
-            'weight_kg': np.random.uniform(2.5, 10.0, size=100),  # Weight in kg
-            'height_cm': np.random.uniform(45, 90, size=100)  # Height in cm
-        })
-
-        columns_list = list(data.columns)
+        columns_list = list(data1.columns)
 
         #table
-        col = st.columns((1.5, 2, 2, 2, 2, 2), gap='medium')  
-        header = columns_list #header
+        col = st.columns((1.5, 2, 2, 2, 2, 2,2,2,2,2,2), gap='medium')  
+        header = columns_list
 
         for col, field in zip(col, header): 
             col.write("**" + field + "**")
-
-        for idx, row in data.iterrows():
-            col = st.columns((1.5, 2, 2, 2, 2, 2), gap='medium')  
-            col[0].write(str(idx))
-            col[1].write(row['category'])
-            col[2].write(row['age_months'])
-            col[3].write(row['weight_kg'])
-            col[4].write(row['height_cm'])
+    
+        for idx, row in data1.iterrows():
+            col = st.columns((1.5, 2, 2, 2, 2, 2,2,2,2,2,2), gap='medium')  
+            col[0].write(row[0])
+            col[1].write(row[1])
+            col[2].write(row[2])
+            col[3].write(row[3])
+            col[4].write(row[4])
+            col[5].write(row[5])
+            col[6].write(row[6])
+            col[7].write(row[7])
+            col[8].write(row[8])
+            col[9].write(row[9])
             
-            placeholder = col[5].empty()
-            show_more = placeholder.button("more", key=idx, type="primary")
-
-            # if button pressed
-            if show_more:
-                # rename button
-                placeholder.button("less", key=str(idx) + "_")
-                
-                # do stuff
-                st.write("This is some more stuff with a checkbox")
-                temp = st.selectbox("Select one", ["A", "B", "C"], key=f"selectbox_{idx}")
-                st.write("You picked ", temp)
-                st.write("---")
+            placeholder = col[10].empty()
+            with placeholder.popover("Action", help="Klik untuk action"):
+                st.markdown("Penanganan")
+                if st.button("Rekomendasi gizi", key=row[0]):
+                    print(idx)
+                    st.markdown("Hello World 👋")
+                    name = st.text_input("What's your name?", key=idx)
+                    st.write("Your name:", name)
+                    if st.button("Kirim", key=row[1]):
+                        print(row[1])
+                        # if row[1] in data1['Nama Balita'].values:
+                        #     riwayat = riwayat.append(data1[data1['Nama Balita'] == row[1]])
+                        #     print(riwayat)
+                if st.button("Analisis Medis", key=row[2]):
+                    st.markdown("Hello World 👋")
+                    name = st.text_input("What's your name?", key=idx)
+                    st.write("Your name:", name)
     with tab2:
-        st.header("Content for Tab 2")
-        st.write("This is the content of the second tab.")
+        if riwayat.empty:
+                st.info(
+                    """
+                    Anda belum melakukan aksi apapun sebelumnya.
+                    """,
+                    icon="📊",
+                )
+        columns_list = list(riwayat.columns)
+
+        #table
+        col = st.columns((1.5, 2, 2, 2, 2, 2,2,2,2,2,2), gap='medium')  
+        header = columns_list
+
+        for col, field in zip(col, header): 
+            col.write("**" + field + "**")
+    
+        for idx, row in riwayat.iterrows():
+            col = st.columns((1.5, 2, 2, 2, 2, 2,2,2,2,2,2), gap='medium')  
+            col[0].write(row[0])
+            col[1].write(row[1])
+            col[2].write(row[2])
+            col[3].write(row[3])
+            col[4].write(row[4])
+            col[5].write(row[5])
+            col[6].write(row[6])
+            col[7].write(row[7])
+            col[8].write(row[8])
+            col[9].write(row[9])
+            
+            placeholder = col[10].empty()
+            if st.button("Hapus", key=row[0]):
+                riwayat = riwayat.drop(idx)
+
 
 # Settings page 3
 def posyandu():
-    st.title("Data posyandu")
-    tab1, tab2, tab3 = st.tabs(["Cat", "Dog", "Owl"])
+    st.title("Data Posyandu")
+
+    tab1, tab2 = st.tabs(["Cat", "Dog"])
 
     with tab1:
-        st.header("A cat")
-        st.image("https://static.streamlit.io/examples/cat.jpg", width=200)
-    with tab2:
-        st.header("A dog")
-        st.image("https://static.streamlit.io/examples/dog.jpg", width=200)
-    with tab3:
-        st.header("An owl")
-        st.image("https://static.streamlit.io/examples/owl.jpg", width=200)
+        data_posyandu = pd.read_excel("data/data_posyandu.xlsx")
+        st.dataframe(data_posyandu)
 
 # Article
 def article():
+    st.title('Edukasi')
+    st.header('Cara Mengatasi Stunting pada Anak')
+    st.markdown('''
+        Baca lebih lanjut tentang cara mengatasi stunting pada anak
+        ''')
+    st.link_button("Read More", "https://genbest.id/articles/cara-mengatasi-stunting-pada-anak-orang-tua-wajib-tahu")
+            
+    st.header('Stunting dalam Sebuah Genggaman')
+    st.markdown('''
+        Baca lebih lanjut tentang stunting dalam sebuah genggaman
+        ''')
+    st.link_button("Read More", "https://www-who-int.translate.goog/news/item/19-11-2015-stunting-in-a-nutshell?_x_tr_sl=en&_x_tr_tl=id&_x_tr_hl=id&_x_tr_pto=tc")
     
-    st.title('Research article')
+    st.header('Kenali Stunting dan Pencegahannya')
+    st.markdown('''
+        Baca lebih lanjut tentang kenali stunting dan pencegahannya
+        ''')
+    st.link_button("Read More", "https://kampungkb.bkkbn.go.id/kampung/20664/intervensi/354753/kenali-stunting-dan-pencegahan-nya")
+            
+    st.header('Keberhasilan Pemerintah dalam Mengatasi Stunting')
+    st.markdown('''
+        Baca lebih lanjut tentang keberhasilan pemerintah dalam mengatasi stunting
+        ''')
+    st.link_button("Read More", "https://www.setneg.go.id/baca/index/buka_rakornas_stunting_wapres_ungkap_keberhasilan_pemerintah_turunkan_prevalensi_lima_tahun_terakhir")
+    
+    st.header('Permasalahan Stunting di Indonesia dan Penyelesaiannya')
+    st.markdown('''
+        Baca lebih lanjut tentang permasalahan stunting di Indonesia dan penyelesaiannya
+        ''')
+    st.link_button("Read More", "https://www.djkn.kemenkeu.go.id/kpknl-pontianak/baca-artikel/16261/permasalahan-stunting-di-indonesia-dan-penyelesaiannya.html")
+            
+    st.header('Pahami Stunting pada Anak Sejak Dini')
+    st.markdown('''
+        Baca lebih lanjut tentang pahami stunting pada anak sejak dini
+        ''')
+    st.link_button("Read More", "https://www.generasimaju.co.id/artikel/0-3-bulan/kesehatan/pahami-stunting-pada-anak-sejak-dini?utm_source=google&utm_medium=cpc&utm_campaign=sgm-sem_generic_iffodsa-aon_cosideration_traffic_Nov-2024&utm_term=dsa&utm_content=iffo&&&&&gad_source=1&gclid=Cj0KCQjwm5e5BhCWARIsANwm06iXoa3zdL2acx-b5lM7JDIAsWg1CPhG43iL_28reSgNMTVAIxB0G8caAmy9EALw_wcB&gclsrc=aw.ds")
+    
+    st.header('4 Cara Mencegah Stunting')
+    st.markdown('''
+        Baca lebih lanjut tentang 4 cara mencegah stunting
+        ''')
+    st.link_button("Read More", "https://upk.kemkes.go.id/new/4-cara-mencegah-stunting")
+            
+    st.header('Cara Mencegah Stunting dari Berbagai Pihak')
+    st.markdown('''
+        Baca lebih lanjut tentang cara mencegah stunting dari berbagai pihak
+        ''')
+    st.link_button("Read More", "https://ayosehat.kemkes.go.id/cara-mencegah-stunting-dari-berbagai-pihak")
+            
+    st.header('Apa itu Stunting?')
+    st.markdown('''
+        Baca lebih lanjut tentang apa itu stunting
+        ''')
+    st.link_button("Read More", "https://www.alodokter.com/stunting")
+            
+    st.header('Pengertian Stunting dan Pencegahannya')
+    st.markdown('''
+        Baca lebih lanjut tentang pengertian stunting dan pencegahannya
+        ''')
+    st.link_button("Read More", "https://www.siloamhospitals.com/informasi-siloam/artikel/apa-itu-stunting")
 
-    st.header('Writing an interactive research article using Streamlit')
-    if st.button("Read More", key="read_more_1"):
-        st.markdown('''
-        This is additional information that provides more context and details about the topic discussed in the article. 
-        It can include insights, data, or any other relevant information that enhances the reader's understanding.
-        ''')
-        if st.button("Back", key="back_1"):
-            st.empty()
-            
-    st.header('Writing an interactive research article using Streamlit2')
-    if st.button("Read More", key="read_more_2"):
-        st.markdown('''
-        This is additional information that provides more context and details about the topic d.
-        ''')
-        if st.button("Back", key="back_2"):
-            st.empty()
-    
-    st.header('Writing an interactive research article using Streamlit3')
-    if st.button("Read More", key="read_more_3"):
-        st.markdown('''
-        This is additional information and details about the topic discussed in the article. 
-        It can include insights, data, or any other relevant information that enhances the reader's understanding.
-        ''')
-        if st.button("Back", key="back_3"):
-            st.empty()
-            
 # Settings page 4
 def account_page():
     st.title("Account Information")
