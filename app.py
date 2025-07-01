@@ -144,11 +144,11 @@ def authenticate_user(email, password):
 def dashboard_page():
     st.title("Dashboard")
     st.info(
-    """
-    Aplikasi ini masih beta dan beberapa fitur masih terbatas
-    """,
-    icon="👾",
-)
+        """
+        Aplikasi ini masih beta dan beberapa fitur masih terbatas
+        """,
+        icon="👾",
+    )
 
     st.sidebar.title("Options")
     st.sidebar.write("Select an option from the sidebar.")
@@ -157,7 +157,7 @@ def dashboard_page():
 
     with col[0]:
         colcol = st.columns((1.6,2), gap='medium')
-        
+
         def make_donut(healthy_percentage, label_text, color_scheme):
             if color_scheme == 'blue':
                 chart_color = ['#29b5e8', '#155F7A']
@@ -167,7 +167,7 @@ def dashboard_page():
                 chart_color = ['#F39C12', '#875A12']
             elif color_scheme == 'red':
                 chart_color = ['#E74C3C', '#781F16']
-            
+
             # Data for the donut chart
             source = pd.DataFrame({
                 "Category": ['Unhealthy', label_text],
@@ -177,7 +177,7 @@ def dashboard_page():
                 "Category": ['Unhealthy', label_text],
                 "Percentage": [100, 0]
             })
-            
+
             # Create the donut chart
             plot = alt.Chart(source).mark_arc(innerRadius=45, cornerRadius=25).encode(
                 theta="Percentage",
@@ -187,12 +187,12 @@ def dashboard_page():
                                     range=chart_color),
                                 legend=None),
             ).properties(width=130, height=130)
-            
+
             # Add text to the chart
             text = plot.mark_text(align='center', color=chart_color[0], font="Lato", fontSize=32, fontWeight=700, fontStyle="italic").encode(
                 text=alt.value(f'{healthy_percentage} %')
             )
-            
+
             # Background plot
             plot_bg = alt.Chart(source_bg).mark_arc(innerRadius=45, cornerRadius=20).encode(
                 theta="Percentage",
@@ -202,7 +202,7 @@ def dashboard_page():
                                     range=chart_color),
                                 legend=None),
             ).properties(width=130, height=130)
-            
+
             return plot_bg + plot + text
 
         with colcol[0]:
@@ -217,12 +217,24 @@ def dashboard_page():
         grid1, grid2 = st.columns((2), gap='medium')
         grid1.metric("**Total Balita**", len(data))
         grid2.metric("**Balita Potensi Stunting**", len(data[data['Status Stunting'] == 'Potensi Stunting']))
-        
+
         grid3, grid4 = st.columns((2), gap='medium')
         grid3.metric("**Balita Sehat**", len(data[data['Status Stunting'] == 'Sehat']))
         grid4.metric("**Balita Stunting**", len(data[data['Status Stunting'] == 'Stunting']))
-        
-    #Lanjutan dashboard
+
+    # Tambahan chart dan data
+    st.markdown("---")
+    st.subheader("Distribusi Usia Balita")
+
+    # Bar chart status stunting per gender
+    if 'Jenis Kelamin' in data.columns:
+        gender_status = data.groupby(['Jenis Kelamin', 'Status Stunting']).size().unstack(fill_value=0)
+        st.bar_chart(gender_status)
+    else:
+        st.info("Kolom 'Jenis Kelamin' tidak ditemukan di data.")
+
+    st.subheader("5 Data Balita Terbaru")
+    st.dataframe(data.tail(5))
 
 # Data page 2
 def data_page():
