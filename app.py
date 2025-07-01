@@ -134,19 +134,10 @@ def main():
         
 # Login function to authenticate user and fetch details
 def authenticate_user(email, password):
-    conn = get_db_connection()
-    if conn:
-        try:
-            cursor = conn.cursor()
-            cursor.execute("SELECT fullname, email, number, location, role FROM users WHERE email = %s AND password = %s", (email, password))
-            user = cursor.fetchone()
-            cursor.close()
-            return user
-        except Exception as e:
-            st.error(f"Error querying the database: {e}")
-            return None
-        finally:
-            conn.close()
+    # Hardcoded authentication for admin
+    if email == "admin123@gmali.com" and password == "admin123":
+        # Return a tuple similar to the DB result: (fullname, email, number, location, role)
+        return ("Admin", "admin123@gmali.com", "08123456789", "Jakarta", "admin")
     return None
 
 # Dashboard (Home page) 1
